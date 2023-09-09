@@ -1,0 +1,54 @@
+version: '3'
+
+services:
+  site-web:
+    image: cybermaniac-web
+    build: ./cybermaniac/
+    ports:
+      - '3000:3000'
+    networks:
+        - front-network
+
+  apache-oidc:
+    build: ./apache-oidc
+    networks:
+      - front-network
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+
+  backend:
+    build: ./Store-Back-Medusa/
+    ports:
+      - '9000:9000'
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/medusa-db-yndhl
+    networks:
+      - backend
+    depends_on:
+      - postgres
+
+  postgres:
+    build: ./postgres/
+    ports:
+      - 5432:5432
+    networks:
+      - backend
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+    volumes:
+      - postgres-data2:/var/lib/postgresql/data
+    command: ["sh", "/docker-entrypoint-initdb.d/init-db.sh"] # Remplacer la commande de démarrage par défaut
+
+
+volumes:
+  postgres-data2:
+
+networks:
+    front-network:
+    backend:
